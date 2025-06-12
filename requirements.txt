@@ -1,0 +1,5 @@
+pydantic
+langchain-ollama
+browser-use[memory] # <-- Add [memory] here
+playwright
+langchain_google_genai
