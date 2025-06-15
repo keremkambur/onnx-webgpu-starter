@@ -5,24 +5,26 @@ import json
 from typing import Optional
 import re
 
-# Import the new utility function
+# Import the utility function for timestamped filenames
 from utils import get_formatted_datetime
 
 from langchain_ollama import ChatOllama
-from browser_use import Agent, Browser, Controller
+# Import BrowserConfig which is required for headless/containerized environments
+from browser_use import Agent, Browser, BrowserConfig, Controller
 from pydantic import BaseModel
 
-# --- Final, Correct Initializer using your most powerful local model ---
-OLLAMA_API_BASE_URL = "https://ollama-client.makinarota.com"
+# --- Set the base URL for the local Ollama server ---
+# Using host.docker.internal is correct for connecting from a dev container to the host machine
+OLLAMA_API_BASE_URL = "http://host.docker.internal:11434"
 
+# --- LLM Initializer ---
 ollamaLlm = ChatOllama(
-    #model='qwen2.5:14b-instruct-q4_0', # Using your most powerful available model
-    model='gemma3:12b', # Using your most powerful available model
+    model='gemma3:12b', # Using the model from your last test run
     num_ctx=8192,
     base_url=OLLAMA_API_BASE_URL,
     temperature=0.0, # Setting temperature to 0 for maximum predictability
     format="json",
-    # Increased timeout to 5 minutes to prevent connection errors on the large initial prompt
+    # A generous timeout for the large initial prompt
     client_kwargs={"timeout": 300.0}
 )
 
@@ -41,25 +43,26 @@ controller = Controller(output_model=Transcriptions)
 # --- Main Asynchronous Function ---
 async def run_search():
     try:
-        # Calling Browser() directly
-        async with Browser() as browser:
+        # Create a BrowserConfig/Profile to disable the sandbox for the container.
+        browser_profile = BrowserConfig(chromium_sandbox=False)
+        
+        # Pass the profile to the Browser constructor to launch correctly.
+        async with Browser(browser_profile=browser_profile) as browser:
             # Programmatically navigate to the start URL
             print("▶️ Programmatically navigating to the starting URL...")
             await browser.navigate_to("https://www.youtube.com/watch?v=2E140N7NfG4")
             print("✅ Navigation complete. Starting agent.")
 
-            # Get a unique timestamp for this run's output files
             run_timestamp = get_formatted_datetime()
 
             agent = Agent(
                 task=(
                     """
                     **Your Core Directive: Chain of Thought**
-                    You are a web automation agent. You must use a step-by-step thinking process to achieve your goal.
-                    
-                    1.  **OBSERVE:** Look at the current page and the interactive elements.
-                    2.  **PLAN:** Compare the page to the overall plan and state the single next step.
-                    3.  **ACTION:** Choose the one concrete tool action (like `click_element_by_index` or `extract_content`) that achieves that single next step. Do not use 'unknown()'.
+                    You are a web automation agent. Follow these steps on every turn:
+                    1.  **OBSERVE:** Look at the current page.
+                    2.  **PLAN:** State the single next step from the OVERALL PLAN below.
+                    3.  **ACTION:** Choose the one concrete tool to achieve that step. A click action MUST look like this: `[{"click_element_by_index": {"index": 123}}]`. You are FORBIDDEN from using 'unknown()'.
                     4.  **RESPOND:** Format your thinking and action into the required JSON.
 
                     **JSON FORMAT RULE:**
@@ -78,9 +81,8 @@ async def run_search():
                 controller=controller,
                 browser=browser,
                 max_actions_per_step=1,
-                # Use the timestamp to create a unique GIF filename
                 generate_gif=f"agent_history_{run_timestamp}.gif",
-                use_vision=False, # This model is not a vision model
+                use_vision=False,
             )
 
             print("🚀 Starting agent execution...")
