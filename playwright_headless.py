@@ -22,7 +22,8 @@ async def test_navigation():
 
             # Get the text content of the span
             span_text = await span_element.text_content()
-            print("span text:"+span_text)
+            print("span text:")
+            print(span_text)
 
         
         except Exception as e:

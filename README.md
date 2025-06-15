@@ -2,9 +2,27 @@
 
 ## Project Description
 
-This project demonstrates the use of the `browser-use` library for web automation and data extraction. It uses `langchain-ollama` and `langchain-google-genai` to interact with language models. It also uses `playwright` to control the browser.
+This project demonstrates the use of the `browser-use` library for web automation and data extraction. It uses `langchain-ollama` and `langchain-google-genai` to interact with language models. It also uses `playwright` to control the browser. `playwright_headless.py` provides a reference usage for Playwright.
 
 ## Installation
+
+### Option 1: Using Docker
+
+1.  Install Docker and VS Code Dev Containers extension.
+2.  Clone the repository.
+3.  Build the Docker image:
+
+    ```bash
+    docker build -t browser-use-test .
+    ```
+
+4.  Run the Docker container:
+
+    ```bash
+    docker run -it --rm -p 8888:8888 browser-use-test
+    ```
+
+### Option 2: Using VS Code Dev Containers for Debugging
 
 1.  Install Docker and VS Code Dev Containers extension.
 2.  Clone the repository.
@@ -15,6 +33,9 @@ This project demonstrates the use of the `browser-use` library for web automatio
     ```bash
     pip3 install -r requirements.txt
     ```
+
+6.  Set the environment variables in the `.devcontainer/devcontainer.json` file as described in the Configuration section.
+7.  You can now debug the application by setting breakpoints and running the desired script (e.g., `app.py`) in the VS Code debugger.
 
 ## Configuration
 
